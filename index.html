@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Terminal Rush — A fast-paced typing arcade game with a cyberpunk terminal aesthetic. Test your speed and accuracy against the clock.">
+  <title>TERMINAL RUSH — Typing Arcade</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- Monospace font stack: uses system fonts first, no external dependency -->
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ===== Header ===== -->
+  <header class="header">
+    <div class="brand-mark" aria-hidden="true">TR</div>
+    <div>
+      <h1 class="title">Terminal Rush</h1>
+      <div class="title-sub">Typing Arcade v1.0</div>
+    </div>
+  </header>
+
+  <!-- ===== Welcome Screen ===== -->
+  <section id="welcome-screen" class="screen active" aria-label="Welcome">
+
+    <div class="briefing">
+      <p class="prompt-line">$ cat mission_briefing.txt</p>
+      <p>
+        You have <span class="highlight">60 seconds</span> to type as many terminal commands as you can.
+        Each line appears on screen — type it exactly and hit <kbd>Enter</kbd> to submit.
+      </p>
+      <p>
+        Correct submissions build your <span class="highlight">combo</span> for bonus points.
+        Mistakes reset the chain. Speed and precision both count.
+      </p>
+      <p>
+        Choose your difficulty, then start the run. Good luck, operator.
+      </p>
+    </div>
+
+    <!-- Difficulty selector -->
+    <div class="difficulty-row">
+      <label>Difficulty:</label>
+      <div class="difficulty-options" id="difficulty-options">
+        <button class="diff-btn" data-diff="easy" id="diff-easy">Easy</button>
+        <button class="diff-btn selected" data-diff="normal" id="diff-normal">Normal</button>
+        <button class="diff-btn" data-diff="hard" id="diff-hard">Hard</button>
+      </div>
+    </div>
+
+    <!-- Personal bests -->
+    <div class="pb-row" id="pb-row">
+      <span>Best Score: <span class="pb-value" id="pb-score">—</span></span>
+      <span>Best WPM: <span class="pb-value" id="pb-wpm">—</span></span>
+    </div>
+
+    <!-- Start -->
+    <button class="start-btn" id="start-btn">▶ Start Run</button>
+
+    <div class="shortcut-hint">
+      <kbd>Enter</kbd> submit &nbsp;·&nbsp; <kbd>Esc</kbd> abort run &nbsp;·&nbsp; <kbd>Backspace</kbd> edit
+    </div>
+  </section>
+
+  <!-- ===== Game Screen ===== -->
+  <section id="game-screen" class="screen" aria-label="Game">
+
+    <!-- Live stats -->
+    <div class="stats-bar">
+      <div class="stat">
+        <div class="stat-label">Time</div>
+        <div class="stat-value timer" id="stat-time">60</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Score</div>
+        <div class="stat-value" id="stat-score">0</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">WPM</div>
+        <div class="stat-value" id="stat-wpm">0</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Accuracy</div>
+        <div class="stat-value" id="stat-accuracy">100%</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Lines</div>
+        <div class="stat-value" id="stat-lines">0</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Combo</div>
+        <div class="stat-value combo" id="stat-combo">0x</div>
+      </div>
+    </div>
+
+    <!-- Target command -->
+    <div class="target-area">
+      <div class="target-text" id="target-text"></div>
+    </div>
+
+    <!-- Typing input -->
+    <div class="input-area">
+      <input
+        type="text"
+        class="game-input"
+        id="game-input"
+        autocomplete="off"
+        autocorrect="off"
+        autocapitalize="off"
+        spellcheck="false"
+        placeholder="type the command above..."
+        aria-label="Type the command shown above"
+      >
+      <button class="submit-btn" id="submit-btn">Enter ↵</button>
+    </div>
+
+    <!-- Feedback line -->
+    <div class="feedback" id="feedback" aria-live="polite"></div>
+
+    <!-- Keyboard hints -->
+    <div class="game-hints">
+      <span><kbd>Enter</kbd> submit</span>
+      <span><kbd>Esc</kbd> abort run</span>
+    </div>
+  </section>
+
+  <!-- ===== Results Screen ===== -->
+  <section id="results-screen" class="screen" aria-label="Results">
+
+    <div class="results-title">— Run Complete —</div>
+
+    <div class="results-grid">
+      <div class="result-card primary">
+        <div class="result-label">Final Score</div>
+        <div class="result-value" id="res-score">0</div>
+        <div class="new-best" id="res-score-best" hidden>★ New Personal Best!</div>
+      </div>
+      <div class="result-card">
+        <div class="result-label">WPM</div>
+        <div class="result-value" id="res-wpm">0</div>
+        <div class="new-best" id="res-wpm-best" hidden>★ New Best!</div>
+      </div>
+      <div class="result-card">
+        <div class="result-label">Accuracy</div>
+        <div class="result-value" id="res-accuracy">0%</div>
+      </div>
+      <div class="result-card">
+        <div class="result-label">Lines Completed</div>
+        <div class="result-value" id="res-lines">0</div>
+      </div>
+      <div class="result-card">
+        <div class="result-label">Best Combo</div>
+        <div class="result-value" id="res-combo">0x</div>
+      </div>
+    </div>
+
+    <div class="results-actions">
+      <button class="play-again-btn" id="play-again-btn">▶ Play Again</button>
+      <button id="menu-btn">Menu</button>
+    </div>
+
+    <details class="scoring-info">
+      <summary>How scoring works</summary>
+      <p>
+        <strong>Points per line:</strong> Each correctly typed character earns 10 points.
+        A speed bonus of up to 50 points is awarded for fast submissions (under 4 seconds).
+        Your current combo multiplier (1× base + 0.25× per combo level, max 3×) scales the total.
+      </p>
+      <p>
+        <strong>Incorrect submissions</strong> earn 2 points per correct character with no bonus and reset the combo.
+      </p>
+      <p>
+        <strong>WPM</strong> = (correctly typed characters ÷ 5) ÷ elapsed minutes. Only counts characters from correct submissions.
+      </p>
+      <p>
+        <strong>Accuracy</strong> = correct characters across all attempts ÷ total characters typed, shown as a percentage.
+      </p>
+    </details>
+  </section>
+
+</div><!-- /app -->
+
+<!-- Confirm modal for aborting an active run -->
+<div class="modal-overlay" id="confirm-modal">
+  <div class="modal-box">
+    <p>Abort the current run? Your progress will be lost.</p>
+    <div class="modal-actions">
+      <button class="modal-cancel" id="modal-cancel">Continue</button>
+      <button class="modal-confirm" id="modal-confirm">Abort</button>
+    </div>
+  </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
