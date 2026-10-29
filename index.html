@@ -1,197 +1,172 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="matrix">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Terminal Rush — A fast-paced typing arcade game with a cyberpunk terminal aesthetic. Test your speed and accuracy against the clock.">
-  <title>TERMINAL RUSH — Typing Arcade</title>
-  <link rel="stylesheet" href="style.css">
-  <!-- Monospace font stack: uses system fonts first, no external dependency -->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TERMINAL RUSH // Cyberpunk Typing Arcade</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
-<body>
+<body class="crt-active">
+  <!-- Scanline & CRT Vignette Overlay -->
+  <div class="scanlines"></div>
+  <div class="vignette"></div>
 
-<div id="app">
+  <div class="terminal-container">
+    <!-- Top Bar Controls -->
+    <header class="terminal-header">
+      <div class="terminal-dots">
+        <span class="dot red"></span>
+        <span class="dot yellow"></span>
+        <span class="dot green"></span>
+        <span class="terminal-title">SYS://TERMINAL-RUSH_v2.3</span>
+      </div>
 
-  <!-- ===== Header ===== -->
-  <header class="header">
-    <div class="brand-mark" aria-hidden="true">TR</div>
-    <div>
-      <h1 class="title">Terminal Rush</h1>
-      <div class="title-sub">Typing Arcade v1.0</div>
-    </div>
-  </header>
+      <div class="top-controls">
+        <div class="control-group">
+          <label for="theme-select">THEME:</label>
+          <select id="theme-select">
+            <option value="matrix">Matrix Green</option>
+            <option value="amber">Amber CRT</option>
+            <option value="synthwave">Synthwave Neon</option>
+            <option value="monochrome">Ghost White</option>
+          </select>
+        </div>
 
-  <!-- ===== Welcome Screen ===== -->
-  <section id="welcome-screen" class="screen active" aria-label="Welcome">
+        <button id="crt-toggle" class="control-btn" title="Toggle CRT Scanlines">CRT: ON</button>
+        <button id="audio-toggle" class="control-btn" title="Toggle Synthesized Audio">AUDIO: ON</button>
+      </div>
+    </header>
 
-    <div class="briefing">
-      <p class="prompt-line">$ cat mission_briefing.txt</p>
-      <p>
-        You have <span class="highlight">60 seconds</span> to type as many terminal commands as you can.
-        Each line appears on screen — type it exactly and hit <kbd>Enter</kbd> to submit.
-      </p>
-      <p>
-        Correct submissions build your <span class="highlight">combo</span> for bonus points.
-        Mistakes reset the chain. Speed and precision both count.
-      </p>
-      <p>
-        Choose your difficulty, then start the run. Good luck, operator.
-      </p>
-    </div>
-
-    <!-- Difficulty selector -->
-    <div class="difficulty-row">
-      <label>Difficulty:</label>
-      <div class="difficulty-options" id="difficulty-options">
-        <button class="diff-btn" data-diff="easy" id="diff-easy">Easy</button>
-        <button class="diff-btn selected" data-diff="normal" id="diff-normal">Normal</button>
-        <button class="diff-btn" data-diff="hard" id="diff-hard">Hard</button>
+    <!-- Game HUD -->
+    <div class="hud">
+      <div class="hud-box">
+        <span class="hud-label">TIME</span>
+        <span id="stat-time" class="hud-value highlight">60s</span>
+      </div>
+      <div class="hud-box">
+        <span class="hud-label">WPM</span>
+        <span id="stat-wpm" class="hud-value">0</span>
+      </div>
+      <div class="hud-box">
+        <span class="hud-label">ACCURACY</span>
+        <span id="stat-accuracy" class="hud-value">100%</span>
+      </div>
+      <div class="hud-box">
+        <span class="hud-label">SCORE</span>
+        <span id="stat-score" class="hud-value">0</span>
+      </div>
+      <div class="hud-box">
+        <span class="hud-label">MULTIPLIER</span>
+        <span id="stat-combo" class="hud-value combo">1.0x</span>
       </div>
     </div>
 
-    <!-- Personal bests -->
-    <div class="pb-row" id="pb-row">
-      <span>Best Score: <span class="pb-value" id="pb-score">—</span></span>
-      <span>Best WPM: <span class="pb-value" id="pb-wpm">—</span></span>
-    </div>
+    <!-- Mode & Pack Selectors (Locked during active runs) -->
+    <div class="config-bar" id="config-bar">
+      <div class="pack-selector">
+        <span class="config-label">PACK:</span>
+        <button class="pack-btn active" data-pack="all">All-in-One</button>
+        <button class="pack-btn" data-pack="linux">Linux Admin</button>
+        <button class="pack-btn" data-pack="git">Git Wizard</button>
+        <button class="pack-btn" data-pack="cloud">Docker & Cloud</button>
+      </div>
 
-    <!-- Start -->
-    <button class="start-btn" id="start-btn">▶ Start Run</button>
-
-    <div class="shortcut-hint">
-      <kbd>Enter</kbd> submit &nbsp;·&nbsp; <kbd>Esc</kbd> abort run &nbsp;·&nbsp; <kbd>Backspace</kbd> edit
-    </div>
-  </section>
-
-  <!-- ===== Game Screen ===== -->
-  <section id="game-screen" class="screen" aria-label="Game">
-
-    <!-- Live stats -->
-    <div class="stats-bar">
-      <div class="stat">
-        <div class="stat-label">Time</div>
-        <div class="stat-value timer" id="stat-time">60</div>
-      </div>
-      <div class="stat">
-        <div class="stat-label">Score</div>
-        <div class="stat-value" id="stat-score">0</div>
-      </div>
-      <div class="stat">
-        <div class="stat-label">WPM</div>
-        <div class="stat-value" id="stat-wpm">0</div>
-      </div>
-      <div class="stat">
-        <div class="stat-label">Accuracy</div>
-        <div class="stat-value" id="stat-accuracy">100%</div>
-      </div>
-      <div class="stat">
-        <div class="stat-label">Lines</div>
-        <div class="stat-value" id="stat-lines">0</div>
-      </div>
-      <div class="stat">
-        <div class="stat-label">Combo</div>
-        <div class="stat-value combo" id="stat-combo">0x</div>
+      <div class="diff-selector">
+        <span class="config-label">DIFF:</span>
+        <button class="diff-btn" data-diff="easy">Easy</button>
+        <button class="diff-btn active" data-diff="normal">Normal</button>
+        <button class="diff-btn" data-diff="hard">Hard</button>
       </div>
     </div>
 
-    <!-- Target command -->
-    <div class="target-area">
-      <div class="target-text" id="target-text"></div>
-    </div>
-
-    <!-- Typing input -->
-    <div class="input-area">
-      <input
-        type="text"
-        class="game-input"
-        id="game-input"
-        autocomplete="off"
-        autocorrect="off"
-        autocapitalize="off"
-        spellcheck="false"
-        placeholder="type the command above..."
-        aria-label="Type the command shown above"
-      >
-      <button class="submit-btn" id="submit-btn">Enter ↵</button>
-    </div>
-
-    <!-- Feedback line -->
-    <div class="feedback" id="feedback" aria-live="polite"></div>
-
-    <!-- Keyboard hints -->
-    <div class="game-hints">
-      <span><kbd>Enter</kbd> submit</span>
-      <span><kbd>Esc</kbd> abort run</span>
-    </div>
-  </section>
-
-  <!-- ===== Results Screen ===== -->
-  <section id="results-screen" class="screen" aria-label="Results">
-
-    <div class="results-title">— Run Complete —</div>
-
-    <div class="results-grid">
-      <div class="result-card primary">
-        <div class="result-label">Final Score</div>
-        <div class="result-value" id="res-score">0</div>
-        <div class="new-best" id="res-score-best" hidden>★ New Personal Best!</div>
+    <!-- Active Input Arena -->
+    <main class="console-body">
+      <div class="prompt-line target-line">
+        <span class="prompt-symbol">target &gt;</span>
+        <div id="target-display" class="target-display">Press ENTER or Start Typing to Boot Engine...</div>
       </div>
-      <div class="result-card">
-        <div class="result-label">WPM</div>
-        <div class="result-value" id="res-wpm">0</div>
-        <div class="new-best" id="res-wpm-best" hidden>★ New Best!</div>
-      </div>
-      <div class="result-card">
-        <div class="result-label">Accuracy</div>
-        <div class="result-value" id="res-accuracy">0%</div>
-      </div>
-      <div class="result-card">
-        <div class="result-label">Lines Completed</div>
-        <div class="result-value" id="res-lines">0</div>
-      </div>
-      <div class="result-card">
-        <div class="result-label">Best Combo</div>
-        <div class="result-value" id="res-combo">0x</div>
-      </div>
-    </div>
 
-    <div class="results-actions">
-      <button class="play-again-btn" id="play-again-btn">▶ Play Again</button>
-      <button id="menu-btn">Menu</button>
-    </div>
+      <div class="prompt-line input-line">
+        <span class="prompt-symbol">runner &gt;</span>
+        <input 
+          type="text" 
+          id="cmd-input" 
+          autocomplete="off" 
+          autocorrect="off" 
+          autocapitalize="off" 
+          spellcheck="false" 
+          placeholder="type command here..."
+          autofocus
+        />
+      </div>
 
-    <details class="scoring-info">
-      <summary>How scoring works</summary>
-      <p>
-        <strong>Points per line:</strong> Each correctly typed character earns 10 points.
-        A speed bonus of up to 50 points is awarded for fast submissions (under 4 seconds).
-        Your current combo multiplier (1× base + 0.25× per combo level, max 3×) scales the total.
-      </p>
-      <p>
-        <strong>Incorrect submissions</strong> earn 2 points per correct character with no bonus and reset the combo.
-      </p>
-      <p>
-        <strong>WPM</strong> = (correctly typed characters ÷ 5) ÷ elapsed minutes. Only counts characters from correct submissions.
-      </p>
-      <p>
-        <strong>Accuracy</strong> = correct characters across all attempts ÷ total characters typed, shown as a percentage.
-      </p>
-    </details>
-  </section>
+      <!-- Simulated STDOUT Execution Feed -->
+      <section class="stdout-window">
+        <div class="stdout-header">
+          <span>CONSOLE LOG / STDOUT EXECUTION FEED</span>
+          <span class="stdout-status" id="stdout-status">IDLE</span>
+        </div>
+        <div class="stdout-stream" id="stdout-stream">
+          <div class="log-entry sys">[SYSTEM]: Kernel initialized. Select pack and type to start run.</div>
+        </div>
+      </section>
+    </main>
 
-</div><!-- /app -->
+    <!-- Footer Stats & Best Scores -->
+    <footer class="terminal-footer">
+      <div class="footer-left">
+        <span>BEST SCORE: <strong id="best-score">0</strong></span>
+        <span>BEST WPM: <strong id="best-wpm">0</strong></span>
+      </div>
+      <div class="footer-right">
+        <span>[ENTER] Submit Line</span>
+        <span>[ESC] Abort Run</span>
+      </div>
+    </footer>
 
-<!-- Confirm modal for aborting an active run -->
-<div class="modal-overlay" id="confirm-modal">
-  <div class="modal-box">
-    <p>Abort the current run? Your progress will be lost.</p>
-    <div class="modal-actions">
-      <button class="modal-cancel" id="modal-cancel">Continue</button>
-      <button class="modal-confirm" id="modal-confirm">Abort</button>
+    <!-- Mission Debrief / Game Over Modal -->
+    <div id="debrief-modal" class="modal-backdrop hidden">
+      <div class="modal-card">
+        <div class="modal-header">
+          <span class="modal-tag">// SESSION REPORT</span>
+          <h2 class="modal-title">RUN TERMINATED</h2>
+        </div>
+
+        <div id="new-record-banner" class="new-record-banner hidden">
+          ★ NEW PERSONAL RECORD DETECTED ★
+        </div>
+
+        <div class="debrief-stats">
+          <div class="stat-pill">
+            <span class="pill-label">FINAL SCORE</span>
+            <span id="debrief-score" class="pill-value highlight">0</span>
+          </div>
+          <div class="stat-pill">
+            <span class="pill-label">SPEED (WPM)</span>
+            <span id="debrief-wpm" class="pill-value">0</span>
+          </div>
+          <div class="stat-pill">
+            <span class="pill-label">ACCURACY</span>
+            <span id="debrief-accuracy" class="pill-value">0%</span>
+          </div>
+          <div class="stat-pill">
+            <span class="pill-label">COMMANDS CLEARED</span>
+            <span id="debrief-lines" class="pill-value">0</span>
+          </div>
+        </div>
+
+        <!-- Dual Action Buttons -->
+        <div class="modal-actions">
+          <button id="reboot-btn" class="modal-btn primary">RETRY RUN [ SPACE ]</button>
+          <button id="menu-btn" class="modal-btn secondary">CHANGE CONFIG [ ESC ]</button>
+        </div>
+      </div>
     </div>
   </div>
-</div>
 
-<script src="script.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
