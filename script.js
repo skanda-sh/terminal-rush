@@ -1,658 +1,627 @@
-/* ===================================================
-   TERMINAL RUSH — Game Logic
-   Vanilla JS · No dependencies · No frameworks
-   =================================================== */
+/* =============================================================================
+   TERMINAL RUSH ⚡ // Core Game Engine v2.3
+   Features: Mid-run Lockout, Menu Return, Shuffle Queue, Debrief Actions
+   ============================================================================= */
 
-(function () {
-  'use strict';
+// --- 1. SYNTHESIZED 8-BIT AUDIO ENGINE ---
+class SoundFxEngine {
+  constructor() {
+    this.ctx = null;
+    this.enabled = true;
+  }
 
-  // ──────────────────────────────────────────────
-  // Command pools by difficulty
-  // ──────────────────────────────────────────────
-
-  const COMMANDS = {
-    easy: [
-      'ls -la',
-      'cd /home/user',
-      'pwd',
-      'cat README.md',
-      'mkdir project',
-      'rm -rf node_modules',
-      'cp file.txt backup/',
-      'mv old.js new.js',
-      'echo "hello world"',
-      'touch index.html',
-      'clear',
-      'whoami',
-      'date +%Y-%m-%d',
-      'head -n 10 log.txt',
-      'tail -f server.log',
-      'wc -l script.js',
-      'chmod 755 deploy.sh',
-      'ping localhost',
-      'curl localhost:3000',
-      'npm start',
-      'git status',
-      'git add .',
-      'git commit -m "init"',
-      'git push origin main',
-      'git log --oneline',
-      'git diff HEAD',
-      'python3 app.py',
-      'node server.js',
-      'exit 0',
-      'history | tail',
-      'df -h',
-      'free -m',
-      'top -n 1',
-      'ps aux | head',
-      'kill -9 1234',
-      'sudo reboot',
-      'ssh user@host',
-      'scp file.tar remote:/',
-      'tar -xzf archive.tar.gz',
-      'unzip package.zip',
-    ],
-
-    normal: [
-      'grep -rn "TODO" src/',
-      'find . -name "*.js" -type f',
-      'awk \'{print $1}\' access.log',
-      'sed -i "s/old/new/g" config.yml',
-      'docker run -d -p 8080:80 nginx',
-      'docker-compose up --build',
-      'kubectl get pods -n production',
-      'git rebase -i HEAD~3',
-      'git stash pop',
-      'git cherry-pick a1b2c3d',
-      'npm install --save-dev eslint',
-      'npx create-react-app ./myapp',
-      'curl -X POST -H "Content-Type: application/json"',
-      'ssh-keygen -t ed25519 -C "user@mail.com"',
-      'openssl req -x509 -newkey rsa:4096',
-      'rsync -avz src/ backup/src/',
-      'ln -s /opt/bin/tool /usr/local/bin/tool',
-      'crontab -e',
-      'journalctl -u nginx --since today',
-      'systemctl restart postgresql',
-      'pg_dump -U admin mydb > dump.sql',
-      'redis-cli SET session:token "abc123"',
-      'python3 -m venv .venv && source .venv/bin/activate',
-      'pip install -r requirements.txt',
-      'export NODE_ENV=production',
-      'env | grep PATH',
-      'xargs -I {} cp {} /backup/',
-      'sort -u names.txt | head -20',
-      'diff --color src/old.js src/new.js',
-      'watch -n 5 "df -h"',
-      'netstat -tlnp | grep :443',
-      'lsof -i :8080',
-      'strace -p 42 -e trace=network',
-      'chmod -R 644 public/',
-      'chown www-data:www-data /var/www',
-      'mount /dev/sdb1 /mnt/data',
-      'tmux new -s dev',
-      'screen -r session_name',
-      'alias ll="ls -alF --color=auto"',
-      'cat /etc/hosts | grep local',
-    ],
-
-    hard: [
-      'awk \'BEGIN{FS=","} NR>1{sum+=$3} END{print sum/NR}\' data.csv',
-      'find /var/log -mtime +30 -name "*.gz" -exec rm {} \\;',
-      'docker exec -it $(docker ps -q --filter name=api) /bin/sh',
-      'kubectl apply -f deployment.yaml --namespace=staging',
-      'git log --graph --abbrev-commit --pretty=format:"%h %s (%cr)"',
-      'openssl s_client -connect example.com:443 -servername example.com',
-      'ssh -L 5432:db.internal:5432 -N bastion@jump.host.io',
-      'tar -czf - /etc/nginx | ssh remote "cat > nginx_backup.tar.gz"',
-      'curl -s https://api.github.com/repos/owner/repo | jq ".stargazers_count"',
-      'for f in *.log; do gzip -9 "$f" && echo "compressed $f"; done',
-      'while IFS= read -r line; do echo "${line^^}"; done < input.txt',
-      'grep -Pzo "(?s)function\\s+\\w+\\(.*?\\)" src/*.js',
-      'sed -E "s/([0-9]{4})-([0-9]{2})/\\2\\/\\1/g" dates.csv',
-      'iptables -A INPUT -p tcp --dport 22 -j ACCEPT',
-      'certbot certonly --nginx -d example.com -d www.example.com',
-      'pg_restore -U admin -d mydb --clean --if-exists dump.tar',
-      'ansible-playbook -i inventory.ini deploy.yml --tags="app,db"',
-      'terraform plan -var-file="prod.tfvars" -out=plan.bin',
-      'SELECT u.name, COUNT(o.id) FROM users u LEFT JOIN orders o ON u.id = o.user_id GROUP BY u.name;',
-      'const debounce = (fn, ms) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };',
-      'Object.entries(config).filter(([k, v]) => v !== null).reduce((a, [k, v]) => ({...a, [k]: v}), {})',
-      'Promise.allSettled(urls.map(u => fetch(u).then(r => r.json())))',
-      'Array.from({length: 10}, (_, i) => ({ id: i, value: Math.random().toFixed(4) }))',
-      'rsync -avz --delete --exclude=".git" --exclude="node_modules" src/ prod:~/app/',
-      'ffmpeg -i input.mp4 -vf "scale=1280:-2" -crf 23 -preset slow output.mp4',
-      'jq \'[.[] | select(.status == "active") | {name, email}]\' users.json',
-      'xargs -P 4 -I {} sh -c \'curl -sL "{}" -o "$(basename {})"\'',
-      'awk \'/^ERROR/{count++} END{printf "Errors: %d\\n", count}\' /var/log/app.log',
-      'python3 -c "import json, sys; print(json.dumps(json.load(sys.stdin), indent=2))"',
-      'git bisect start HEAD v2.0 -- src/core.js',
-      'socat TCP-LISTEN:8080,fork TCP:internal.service:80',
-      'dd if=/dev/urandom of=test.bin bs=1M count=100 status=progress',
-      'trap \'echo "caught SIGTERM"; cleanup; exit 0\' SIGTERM',
-      'inotifywait -m -r -e modify,create ./src | while read path action file; do echo "$action: $file"; done',
-      'perf stat -e cache-misses,cache-references ./benchmark',
-      'strace -f -e trace=open,read,write -p $(pgrep -f "node app")',
-      'vault kv put secret/api-keys stripe="sk_live_abc123" github="ghp_xyz789"',
-      'helm upgrade --install myapp ./chart -f values-prod.yaml --atomic --timeout=300s',
-      'make -j$(nproc) CFLAGS="-O2 -Wall -Werror" && make install PREFIX=/usr/local',
-      'nmap -sV -sC -p 22,80,443,8080 --script=vuln target.example.com',
-    ],
-  };
-
-  // ──────────────────────────────────────────────
-  // Constants
-  // ──────────────────────────────────────────────
-
-  const GAME_DURATION = 60; // seconds
-  const POINTS_PER_CHAR = 10;
-  const POINTS_PER_CHAR_WRONG = 2;
-  const SPEED_BONUS_MAX = 50;
-  const SPEED_BONUS_WINDOW = 4000; // ms — full bonus if submitted within this
-  const COMBO_MULTIPLIER_STEP = 0.25;
-  const COMBO_MULTIPLIER_CAP = 3;
-  const LS_KEY_SCORE = 'tr_best_score';
-  const LS_KEY_WPM = 'tr_best_wpm';
-
-  // ──────────────────────────────────────────────
-  // DOM references
-  // ──────────────────────────────────────────────
-
-  const $ = (sel) => document.querySelector(sel);
-  const $$ = (sel) => document.querySelectorAll(sel);
-
-  const screens = {
-    welcome: $('#welcome-screen'),
-    game: $('#game-screen'),
-    results: $('#results-screen'),
-  };
-
-  const els = {
-    // Welcome
-    startBtn: $('#start-btn'),
-    diffBtns: $$('.diff-btn'),
-    pbScore: $('#pb-score'),
-    pbWpm: $('#pb-wpm'),
-    // Game
-    statTime: $('#stat-time'),
-    statScore: $('#stat-score'),
-    statWpm: $('#stat-wpm'),
-    statAccuracy: $('#stat-accuracy'),
-    statLines: $('#stat-lines'),
-    statCombo: $('#stat-combo'),
-    targetText: $('#target-text'),
-    gameInput: $('#game-input'),
-    submitBtn: $('#submit-btn'),
-    feedback: $('#feedback'),
-    // Results
-    resScore: $('#res-score'),
-    resWpm: $('#res-wpm'),
-    resAccuracy: $('#res-accuracy'),
-    resLines: $('#res-lines'),
-    resCombo: $('#res-combo'),
-    resScoreBest: $('#res-score-best'),
-    resWpmBest: $('#res-wpm-best'),
-    playAgainBtn: $('#play-again-btn'),
-    menuBtn: $('#menu-btn'),
-    // Modal
-    confirmModal: $('#confirm-modal'),
-    modalCancel: $('#modal-cancel'),
-    modalConfirm: $('#modal-confirm'),
-  };
-
-  // ──────────────────────────────────────────────
-  // Game state
-  // ──────────────────────────────────────────────
-
-  let state = 'welcome'; // 'welcome' | 'playing' | 'results'
-  let difficulty = 'normal';
-  let timerInterval = null;
-  let timeRemaining = GAME_DURATION;
-  let startTimestamp = 0; // ms when run began
-  let lineStartTimestamp = 0; // ms when current line appeared
-  let currentTarget = '';
-  let usedIndices = [];
-
-  // Scoring
-  let score = 0;
-  let combo = 0;
-  let bestCombo = 0;
-  let linesCompleted = 0;
-  let correctCharsTotal = 0; // characters from correct submissions
-  let totalCharsAttempted = 0; // total characters typed across all submissions
-  let correctCharsAttempted = 0; // correct chars across all submissions
-
-  // Personal bests
-  let bestScore = loadNumber(LS_KEY_SCORE);
-  let bestWpm = loadNumber(LS_KEY_WPM);
-
-  // ──────────────────────────────────────────────
-  // Utility helpers
-  // ──────────────────────────────────────────────
-
-  /** Safely load a number from localStorage. Returns 0 on any failure. */
-  function loadNumber(key) {
-    try {
-      const raw = localStorage.getItem(key);
-      if (raw === null) return 0;
-      const n = Number(raw);
-      return Number.isFinite(n) && n >= 0 ? n : 0;
-    } catch {
-      return 0;
+  init() {
+    if (!this.ctx) {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      this.ctx = new AudioCtx();
+    }
+    if (this.ctx.state === 'suspended') {
+      this.ctx.resume();
     }
   }
 
-  /** Safely save a number to localStorage. */
-  function saveNumber(key, value) {
-    try {
-      localStorage.setItem(key, String(value));
-    } catch {
-      // Storage full or blocked — silently ignore
-    }
+  toggle() {
+    this.enabled = !this.enabled;
+    return this.enabled;
   }
 
-  /** Pick a random command from the current difficulty pool without immediate repeats. */
-  function pickCommand() {
-    const pool = COMMANDS[difficulty];
-    if (usedIndices.length >= pool.length) {
-      usedIndices = [];
-    }
-    let idx;
-    do {
-      idx = Math.floor(Math.random() * pool.length);
-    } while (usedIndices.includes(idx));
-    usedIndices.push(idx);
-    return pool[idx];
+  playKey() {
+    if (!this.enabled) return;
+    this.init();
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(600, this.ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(300, this.ctx.currentTime + 0.03);
+
+    gain.gain.setValueAtTime(0.04, this.ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.03);
+
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start();
+    osc.stop(this.ctx.currentTime + 0.03);
   }
 
-  /** Escape HTML entities for safe rendering. */
-  function escapeHTML(str) {
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
+  playError() {
+    if (!this.enabled) return;
+    this.init();
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(140, this.ctx.currentTime);
+    osc.frequency.linearRampToValueAtTime(90, this.ctx.currentTime + 0.12);
+
+    gain.gain.setValueAtTime(0.06, this.ctx.currentTime);
+    gain.gain.linearRampToValueAtTime(0.001, this.ctx.currentTime + 0.12);
+
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start();
+    osc.stop(this.ctx.currentTime + 0.12);
   }
 
-  // ──────────────────────────────────────────────
-  // Screen management
-  // ──────────────────────────────────────────────
+  playSuccess() {
+    if (!this.enabled) return;
+    this.init();
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(440, this.ctx.currentTime);
+    osc.frequency.setValueAtTime(880, this.ctx.currentTime + 0.06);
 
-  function showScreen(name) {
-    for (const key in screens) {
-      screens[key].classList.toggle('active', key === name);
-    }
-    // Map screen names to game states
-    const stateMap = { welcome: 'welcome', game: 'playing', results: 'results' };
-    state = stateMap[name] || name;
+    gain.gain.setValueAtTime(0.06, this.ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.14);
+
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start();
+    osc.stop(this.ctx.currentTime + 0.14);
   }
 
-  // ──────────────────────────────────────────────
-  // Welcome screen
-  // ──────────────────────────────────────────────
+  playCombo() {
+    if (!this.enabled) return;
+    this.init();
+    const freqs = [523.25, 659.25, 783.99, 1046.50];
+    freqs.forEach((freq, idx) => {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      const startTime = this.ctx.currentTime + (idx * 0.04);
+      gain.gain.setValueAtTime(0.04, startTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.08);
 
-  function refreshPersonalBests() {
-    bestScore = loadNumber(LS_KEY_SCORE);
-    bestWpm = loadNumber(LS_KEY_WPM);
-    els.pbScore.textContent = bestScore > 0 ? bestScore.toLocaleString() : '—';
-    els.pbWpm.textContent = bestWpm > 0 ? bestWpm : '—';
-  }
-
-  function initWelcome() {
-    refreshPersonalBests();
-    showScreen('welcome');
-  }
-
-  // Difficulty buttons
-  els.diffBtns.forEach((btn) => {
-    btn.addEventListener('click', () => {
-      els.diffBtns.forEach((b) => b.classList.remove('selected'));
-      btn.classList.add('selected');
-      difficulty = btn.dataset.diff;
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(startTime);
+      osc.stop(startTime + 0.08);
     });
-  });
-
-  // Start button
-  els.startBtn.addEventListener('click', startRun);
-
-  // ──────────────────────────────────────────────
-  // Start a run
-  // ──────────────────────────────────────────────
-
-  function startRun() {
-    if (state === 'playing') return; // prevent double-start
-
-    // Reset state
-    score = 0;
-    combo = 0;
-    bestCombo = 0;
-    linesCompleted = 0;
-    correctCharsTotal = 0;
-    totalCharsAttempted = 0;
-    correctCharsAttempted = 0;
-    timeRemaining = GAME_DURATION;
-    usedIndices = [];
-
-    showScreen('game');
-    updateStats();
-
-    // Set first target
-    nextTarget();
-
-    // Focus input
-    els.gameInput.disabled = false;
-    els.gameInput.value = '';
-    els.gameInput.focus();
-    clearFeedback();
-
-    // Start timer
-    startTimestamp = Date.now();
-    timerInterval = setInterval(tick, 1000);
   }
 
-  // ──────────────────────────────────────────────
-  // Timer
-  // ──────────────────────────────────────────────
+  playTick(pitch = 800) {
+    if (!this.enabled) return;
+    this.init();
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(pitch, this.ctx.currentTime);
 
-  function tick() {
-    timeRemaining--;
-    if (timeRemaining <= 0) {
-      timeRemaining = 0;
-      endRun();
-    }
-    updateTimerDisplay();
+    gain.gain.setValueAtTime(0.03, this.ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + 0.05);
+
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start();
+    osc.stop(this.ctx.currentTime + 0.05);
   }
 
-  function updateTimerDisplay() {
-    els.statTime.textContent = timeRemaining;
-    els.statTime.classList.remove('warning', 'danger');
-    if (timeRemaining <= 5) {
-      els.statTime.classList.add('danger');
-    } else if (timeRemaining <= 15) {
-      els.statTime.classList.add('warning');
+  playGameOver() {
+    if (!this.enabled) return;
+    this.init();
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(400, this.ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(60, this.ctx.currentTime + 0.6);
+
+    gain.gain.setValueAtTime(0.08, this.ctx.currentTime);
+    gain.gain.linearRampToValueAtTime(0.001, this.ctx.currentTime + 0.6);
+
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start();
+    osc.stop(this.ctx.currentTime + 0.6);
+  }
+}
+
+const sfx = new SoundFxEngine();
+
+// --- 2. COMMAND DATABASE ---
+const COMMAND_DATABASE = {
+  linux: {
+    easy: [
+      { cmd: "ls -la", out: "drwxr-xr-x 5 runner staff 160B .  -rw-r--r-- 1 runner staff 2.4KB config.json" },
+      { cmd: "pwd", out: "/home/runner/production/service" },
+      { cmd: "cat /etc/os-release", out: "PRETTY_NAME=\"Ubuntu 24.04 LTS\" NAME=\"Ubuntu\" VERSION_ID=\"24.04\"" },
+      { cmd: "whoami", out: "root@production-edge-01" },
+      { cmd: "mkdir -p src/controllers", out: "Created directory hierarchy: 'src/controllers'" },
+      { cmd: "uptime", out: "17:28:10 up 42 days, 3 users, load average: 0.14, 0.22, 0.18" },
+      { cmd: "touch .env.local", out: "Created empty file .env.local" },
+      { cmd: "clear", out: "Terminal buffer flushed." },
+      { cmd: "df -h", out: "Filesystem     Size  Used Avail Use% Mounted on\n/dev/sda1       50G   14G   34G  30% /" }
+    ],
+    normal: [
+      { cmd: "systemctl status nginx", out: "● nginx.service - Active: active (running) since Wed 10:14:22 UTC" },
+      { cmd: "grep -rnw './logs' -e 'ERROR'", out: "logs/app.log:412: [ERROR] Connection pool timeout after 5000ms" },
+      { cmd: "chmod -R 755 /var/www/html", out: "Applied recursive permissions (755) to /var/www/html" },
+      { cmd: "tar -czvf backup.tar.gz ./data", out: "a ./data\na ./data/prod.db\nBackup archived successfully." },
+      { cmd: "journalctl -u api --lines=5", out: "Oct 29 17:20:01 node-01 api[9012]: Handling incoming request /v1/tokens" },
+      { cmd: "curl -I https://api.dev/v1/health", out: "HTTP/2 200 OK\ncontent-type: application/json\nx-cache: HIT" },
+      { cmd: "tail -f /var/log/syslog", out: "systemd[1]: Started Daily apt upgrade and clean activities." },
+      { cmd: "sed -i 's/DEBUG=True/DEBUG=False/' .env", out: "Configuration patched for production environment." }
+    ],
+    hard: [
+      { cmd: "find . -type f -name '*.log' -delete", out: "Scanned and purged 18 stale runtime log files." },
+      { cmd: "netstat -tulnp | grep :8080", out: "tcp   0   0 0.0.0.0:8080   0.0.0.0:*   LISTEN   4102/node" },
+      { cmd: "ps aux --sort=-%mem | head -n 5", out: "USER  PID  %CPU %MEM  COMMAND\nroot  892  2.1  14.2  python3 -m app.main" },
+      { cmd: "rsync -avz -e ssh ./dist user@srv:/app", out: "sending incremental file list\nsent 4.2MB bytes/sec total size 18.2MB" },
+      { cmd: "awk -F: '{print $1, $3}' /etc/passwd", out: "root 0\ndaemon 1\nrunner 1000\nnobody 65534" },
+      { cmd: "iptables -A INPUT -p tcp --dport 22 -j ACCEPT", out: "Firewall rule appended to INPUT chain." }
+    ]
+  },
+  git: {
+    easy: [
+      { cmd: "git status", out: "On branch main\nYour branch is up to date with 'origin/main'." },
+      { cmd: "git branch", out: "* main\n  feature/auth\n  hotfix/cache-leak" },
+      { cmd: "git add .", out: "Staged 3 files for commit." },
+      { cmd: "git log --oneline -n 3", out: "a81d02c feat: add stdout stream\n5c3011b fix: typo detection\n9f12b04 init" },
+      { cmd: "git pull origin main", out: "From github.com:skanda-sh/terminal-rush\nAlready up to date." },
+      { cmd: "git branch -d patch-1", out: "Deleted branch patch-1 (was a39df12)." },
+      { cmd: "git fetch --all", out: "Fetching origin\nFetching upstream" }
+    ],
+    normal: [
+      { cmd: "git checkout -b feature/jwt-auth", out: "Switched to a new branch 'feature/jwt-auth'" },
+      { cmd: "git commit -m \"fix: latency spike\"", out: "[main d9801ca] fix: latency spike\n 2 files changed, 14 insertions(+)" },
+      { cmd: "git stash pop", out: "On branch main\nChanges applied from stash@{0}: modified script.js" },
+      { cmd: "git remote -v", out: "origin  https://github.com/skanda-sh/terminal-rush.git (fetch)" },
+      { cmd: "git diff HEAD~1", out: "diff --git a/script.js b/script.js\n- const timeout = 1000;\n+ const timeout = 500;" },
+      { cmd: "git merge --no-ff feature/cache", out: "Merge made by the 'ort' strategy. 4 files modified." },
+      { cmd: "git tag -a v2.0 -m \"Release 2.0\"", out: "Tag v2.0 created pointing to commit d9801ca" }
+    ],
+    hard: [
+      { cmd: "git rebase -i HEAD~3", out: "Successfully rebased and updated refs/heads/main." },
+      { cmd: "git cherry-pick 7f9b2c1", out: "[main c19a002] feat: cherry-picked routing logic\n Date: Wed Oct 29" },
+      { cmd: "git reset --soft HEAD~1", out: "Head moved back 1 commit. Working directory changes staged." },
+      { cmd: "git clean -fd", out: "Removing temp/cache_dump.json\nRemoving test_output.bin" },
+      { cmd: "git log --graph --oneline --decorate", out: "* 91a82c (HEAD -> main) feat: deck shuffle\n* c19a002 cherry-pick fix\n* a81d02c initial setup" }
+    ]
+  },
+  cloud: {
+    easy: [
+      { cmd: "docker ps", out: "CONTAINER ID   IMAGE         COMMAND     STATUS          PORTS\n8c901ab9e8   redis:alpine  \"redis\"     Up 3 hours      0.0.0.0:6379" },
+      { cmd: "docker images", out: "REPOSITORY   TAG       IMAGE ID       SIZE\napi-gateway  v2.1      9b34a1029c     142MB" },
+      { cmd: "kubectl get pods", out: "NAME                          READY   STATUS    RESTARTS   AGE\nbackend-deploy-79f8c6-a1     1/1     Running   0          4d" },
+      { cmd: "docker compose down", out: "Stopping network default... Container db removed." },
+      { cmd: "docker stop redis-cluster", out: "redis-cluster gracefully terminated." },
+      { cmd: "kubectl get nodes", out: "NAME          STATUS   ROLES           AGE   VERSION\nnode-pool-01  Ready    control-plane   32d   v1.29.2" }
+    ],
+    normal: [
+      { cmd: "docker build -t app:v1 .", out: "[+] Building 4.8s (11/11) FINISHED => exporting to image app:v1" },
+      { cmd: "docker run -d -p 80:80 nginx", out: "cf81a09d3b241c888 (container running in background on port 80)" },
+      { cmd: "docker logs -f --tail 20 redis", out: "* Ready to accept connections tcp 6379\n* DB loaded from disk: 0.002s" },
+      { cmd: "kubectl logs deployment/api -f", out: "2026-10-29 [INFO] Worker pool initialized with 4 concurrency slots." },
+      { cmd: "docker exec -it web sh", out: "/var/www # Connected to container shell." },
+      { cmd: "docker compose up -d --build", out: "[+] Running 3/3\n✔ Network app_default Created\n✔ Container app-db-1 Started" }
+    ],
+    hard: [
+      { cmd: "docker system prune -a --volumes -f", out: "Deleted Containers: 4\nDeleted Images: 12\nTotal reclaimed space: 4.81GB" },
+      { cmd: "kubectl scale deployment api --replicas=5", out: "deployment.apps/api scaled to 5 replicas" },
+      { cmd: "docker exec -it postgres psql -U root", out: "psql (16.2)\nType \"help\" for help.\nroot=# \\conninfo" },
+      { cmd: "kubectl rollout restart deployment/worker", out: "deployment.apps/worker restarted across cluster." }
+    ]
+  }
+};
+
+// --- 3. STATE ---
+const gameState = {
+  active: false,
+  isEnded: false,
+  timeLeft: 60,
+  timerInterval: null,
+  currentPack: 'all',
+  currentDiff: 'normal',
+  commandQueue: [],
+  lastCommandText: null,
+  activeCommand: null,
+  score: 0,
+  combo: 1.0,
+  consecutiveSuccess: 0,
+  totalCharsTyped: 0,
+  correctCharsTyped: 0,
+  completedLines: 0,
+  lineStartTime: null,
+  bestScore: parseInt(localStorage.getItem('tr_best_score')) || 0,
+  bestWpm: parseInt(localStorage.getItem('tr_best_wpm')) || 0
+};
+
+// DOM References
+const configBar = document.getElementById('config-bar');
+const targetDisplay = document.getElementById('target-display');
+const cmdInput = document.getElementById('cmd-input');
+const stdoutStream = document.getElementById('stdout-stream');
+const stdoutStatus = document.getElementById('stdout-status');
+
+const statTime = document.getElementById('stat-time');
+const statWpm = document.getElementById('stat-wpm');
+const statAccuracy = document.getElementById('stat-accuracy');
+const statScore = document.getElementById('stat-score');
+const statCombo = document.getElementById('stat-combo');
+const bestScoreEl = document.getElementById('best-score');
+const bestWpmEl = document.getElementById('best-wpm');
+
+// Modal Elements
+const debriefModal = document.getElementById('debrief-modal');
+const debriefScore = document.getElementById('debrief-score');
+const debriefWpm = document.getElementById('debrief-wpm');
+const debriefAccuracy = document.getElementById('debrief-accuracy');
+const debriefLines = document.getElementById('debrief-lines');
+const newRecordBanner = document.getElementById('new-record-banner');
+const rebootBtn = document.getElementById('reboot-btn');
+const menuBtn = document.getElementById('menu-btn');
+
+const themeSelect = document.getElementById('theme-select');
+const crtToggle = document.getElementById('crt-toggle');
+const audioToggle = document.getElementById('audio-toggle');
+
+// Initialize UI
+bestScoreEl.textContent = gameState.bestScore;
+bestWpmEl.textContent = gameState.bestWpm;
+
+// --- 4. SHUFFLE QUEUE ---
+function shuffleDeck(array) {
+  const arr = [...array];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function getBaseCommandPool() {
+  let pool = [];
+  const packs = gameState.currentPack === 'all' ? ['linux', 'git', 'cloud'] : [gameState.currentPack];
+  packs.forEach(packName => {
+    if (COMMAND_DATABASE[packName] && COMMAND_DATABASE[packName][gameState.currentDiff]) {
+      pool = pool.concat(COMMAND_DATABASE[packName][gameState.currentDiff]);
+    }
+  });
+  return pool;
+}
+
+function refillDeck() {
+  const rawPool = getBaseCommandPool();
+  let freshDeck = shuffleDeck(rawPool);
+
+  if (freshDeck.length > 1 && gameState.lastCommandText && freshDeck[0].cmd === gameState.lastCommandText) {
+    const swapTarget = Math.floor(Math.random() * (freshDeck.length - 1)) + 1;
+    [freshDeck[0], freshDeck[swapTarget]] = [freshDeck[swapTarget], freshDeck[0]];
+  }
+
+  gameState.commandQueue = freshDeck;
+}
+
+function nextCommand() {
+  if (!gameState.commandQueue || gameState.commandQueue.length === 0) {
+    refillDeck();
+  }
+
+  const pick = gameState.commandQueue.shift();
+  gameState.activeCommand = pick;
+  gameState.lastCommandText = pick.cmd;
+  gameState.lineStartTime = Date.now();
+  cmdInput.value = '';
+  renderTarget(pick.cmd, '');
+}
+
+function renderTarget(targetText, currentInput) {
+  let html = '';
+  for (let i = 0; i < targetText.length; i++) {
+    const targetChar = targetText[i];
+    const typedChar = currentInput[i];
+
+    if (typedChar === undefined) {
+      html += `<span class="target-char char-pending">${escapeHtml(targetChar)}</span>`;
+    } else if (typedChar === targetChar) {
+      html += `<span class="target-char char-correct">${escapeHtml(targetChar)}</span>`;
+    } else {
+      html += `<span class="target-char char-incorrect">${escapeHtml(targetChar)}</span>`;
+    }
+  }
+  targetDisplay.innerHTML = html;
+}
+
+function escapeHtml(str) {
+  if (str === ' ') return '&nbsp;';
+  if (str === '<') return '&lt;';
+  if (str === '>') return '&gt;';
+  return str;
+}
+
+function pushStdout(text, type = 'out') {
+  const entry = document.createElement('div');
+  entry.className = `log-entry ${type}`;
+  entry.textContent = text;
+  stdoutStream.appendChild(entry);
+  stdoutStream.scrollTop = stdoutStream.scrollHeight;
+}
+
+// --- 5. GAME LIFECYCLE ---
+function startGame() {
+  debriefModal.classList.add('hidden');
+  newRecordBanner.classList.add('hidden');
+
+  // Freeze config options during active play
+  configBar.classList.add('locked');
+
+  gameState.active = true;
+  gameState.isEnded = false;
+  gameState.timeLeft = 60;
+  gameState.score = 0;
+  gameState.combo = 1.0;
+  gameState.consecutiveSuccess = 0;
+  gameState.totalCharsTyped = 0;
+  gameState.correctCharsTyped = 0;
+  gameState.completedLines = 0;
+  gameState.lastCommandText = null;
+  gameState.commandQueue = [];
+
+  cmdInput.disabled = false;
+  cmdInput.value = '';
+  cmdInput.focus();
+
+  statTime.textContent = '60s';
+  statTime.classList.remove('critical');
+  statScore.textContent = '0';
+  statCombo.textContent = '1.0x';
+  statAccuracy.textContent = '100%';
+  statWpm.textContent = '0';
+  stdoutStatus.textContent = 'RUN ACTIVE';
+
+  stdoutStream.innerHTML = '';
+  pushStdout('[SYSTEM]: Kernel initialized. Clock counting down 60s.', 'sys');
+
+  nextCommand();
+
+  clearInterval(gameState.timerInterval);
+  gameState.timerInterval = setInterval(() => {
+    gameState.timeLeft--;
+    statTime.textContent = `${gameState.timeLeft}s`;
+
+    if (gameState.timeLeft <= 10 && gameState.timeLeft > 0) {
+      statTime.classList.add('critical');
+      const pitch = gameState.timeLeft <= 3 ? 1200 : 800;
+      sfx.playTick(pitch);
+    }
+
+    updateWpm();
+
+    if (gameState.timeLeft <= 0) {
+      endGame();
+    }
+  }, 1000);
+}
+
+function endGame() {
+  gameState.active = false;
+  gameState.isEnded = true;
+  clearInterval(gameState.timerInterval);
+
+  statTime.classList.remove('critical');
+  stdoutStatus.textContent = 'STANDBY';
+
+  // Lock input field
+  cmdInput.disabled = true;
+  cmdInput.blur();
+
+  sfx.playGameOver();
+  pushStdout(`[SESSION REPORT]: Run finished. Score: ${gameState.score}`, 'sys');
+
+  const finalWpm = calculateWpm();
+  const finalAcc = Math.round((gameState.correctCharsTyped / (gameState.totalCharsTyped || 1)) * 100);
+
+  let isNewRecord = false;
+  if (gameState.score > gameState.bestScore) {
+    gameState.bestScore = gameState.score;
+    localStorage.setItem('tr_best_score', gameState.score);
+    bestScoreEl.textContent = gameState.score;
+    isNewRecord = true;
+  }
+  if (finalWpm > gameState.bestWpm) {
+    gameState.bestWpm = finalWpm;
+    localStorage.setItem('tr_best_wpm', finalWpm);
+    bestWpmEl.textContent = finalWpm;
+    isNewRecord = true;
+  }
+
+  debriefScore.textContent = gameState.score;
+  debriefWpm.textContent = finalWpm;
+  debriefAccuracy.textContent = `${finalAcc}%`;
+  debriefLines.textContent = gameState.completedLines;
+
+  if (isNewRecord) {
+    newRecordBanner.classList.remove('hidden');
+  }
+
+  debriefModal.classList.remove('hidden');
+}
+
+// Return to Standby Menu to reconfigure packs or difficulty
+function returnToMenu() {
+  debriefModal.classList.add('hidden');
+  configBar.classList.remove('locked');
+
+  gameState.active = false;
+  gameState.isEnded = false;
+  clearInterval(gameState.timerInterval);
+
+  cmdInput.disabled = false;
+  cmdInput.value = '';
+  cmdInput.focus();
+
+  statTime.textContent = '60s';
+  statTime.classList.remove('critical');
+  statScore.textContent = '0';
+  statCombo.textContent = '1.0x';
+  statAccuracy.textContent = '100%';
+  statWpm.textContent = '0';
+  stdoutStatus.textContent = 'IDLE';
+
+  targetDisplay.innerHTML = `Press ENTER or Start Typing to Boot Engine...`;
+  pushStdout('[SYSTEM]: Returned to Standby. Packs and difficulty unlocked.', 'sys');
+}
+
+function calculateWpm() {
+  const elapsedMinutes = (60 - gameState.timeLeft) / 60;
+  if (elapsedMinutes <= 0) return 0;
+  return Math.round((gameState.correctCharsTyped / 5) / elapsedMinutes);
+}
+
+function updateWpm() {
+  const wpm = calculateWpm();
+  statWpm.textContent = isNaN(wpm) ? 0 : wpm;
+}
+
+// --- 6. INPUT PROCESSING ---
+cmdInput.addEventListener('input', () => {
+  if (!gameState.active && !gameState.isEnded) {
+    startGame();
+  }
+
+  if (!gameState.active) return;
+
+  const typed = cmdInput.value;
+  const target = gameState.activeCommand.cmd;
+
+  gameState.totalCharsTyped++;
+  const lastCharIndex = typed.length - 1;
+
+  if (lastCharIndex >= 0 && lastCharIndex < target.length) {
+    if (typed[lastCharIndex] === target[lastCharIndex]) {
+      gameState.correctCharsTyped++;
+      sfx.playKey();
+    } else {
+      sfx.playError();
     }
   }
 
-  // ──────────────────────────────────────────────
-  // Target rendering
-  // ──────────────────────────────────────────────
+  renderTarget(target, typed);
 
-  function nextTarget() {
-    currentTarget = pickCommand();
-    lineStartTimestamp = Date.now();
-    renderTarget('');
-  }
+  const acc = Math.round((gameState.correctCharsTyped / gameState.totalCharsTyped) * 100);
+  statAccuracy.textContent = `${isNaN(acc) ? 100 : acc}%`;
+});
 
-  /** Render the target with per-character colour coding based on input so far. */
-  function renderTarget(inputValue) {
-    let html = '';
-    for (let i = 0; i < currentTarget.length; i++) {
-      const ch = escapeHTML(currentTarget[i]);
-      if (i < inputValue.length) {
-        const isCorrect = inputValue[i] === currentTarget[i];
-        const cls = isCorrect ? 'correct' : 'incorrect';
-        html += `<span class="char ${cls}">${ch}</span>`;
-      } else if (i === inputValue.length) {
-        html += `<span class="char pending cursor">${ch}</span>`;
-      } else {
-        html += `<span class="char pending">${ch}</span>`;
-      }
-    }
-    els.targetText.innerHTML = html;
-  }
+cmdInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
 
-  // ──────────────────────────────────────────────
-  // Input handling
-  // ──────────────────────────────────────────────
-
-  els.gameInput.addEventListener('input', () => {
-    if (state !== 'playing') return;
-    renderTarget(els.gameInput.value);
-  });
-
-  els.gameInput.addEventListener('keydown', (e) => {
-    if (state !== 'playing') return;
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      submitLine();
-    }
-  });
-
-  // Prevent form submission (no form, but belt-and-suspenders)
-  els.gameInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') e.preventDefault();
-  });
-
-  els.submitBtn.addEventListener('click', () => {
-    if (state !== 'playing') return;
-    submitLine();
-  });
-
-  // Keep focus on the input during gameplay
-  document.addEventListener('click', () => {
-    if (state === 'playing' && !els.confirmModal.classList.contains('active')) {
-      els.gameInput.focus();
-    }
-  });
-
-  // ──────────────────────────────────────────────
-  // Submission & scoring
-  // ──────────────────────────────────────────────
-
-  function submitLine() {
-    if (state !== 'playing') return;
-
-    const input = els.gameInput.value;
-    if (input.length === 0) {
-      showFeedback('Type something first!', 'incorrect');
+    if (!gameState.active && !gameState.isEnded) {
+      startGame();
       return;
     }
 
-    // Count correct chars in this attempt
-    let correctInAttempt = 0;
-    for (let i = 0; i < Math.min(input.length, currentTarget.length); i++) {
-      if (input[i] === currentTarget[i]) correctInAttempt++;
-    }
+    if (!gameState.active) return;
 
-    totalCharsAttempted += input.length;
-    correctCharsAttempted += correctInAttempt;
+    const typed = cmdInput.value.trim();
+    const target = gameState.activeCommand.cmd.trim();
 
-    const isExactMatch = input === currentTarget;
+    if (typed === target) {
+      gameState.completedLines++;
+      gameState.consecutiveSuccess++;
+      const timeTakenSec = (Date.now() - gameState.lineStartTime) / 1000;
+      const speedBonus = timeTakenSec < 4.0 ? Math.round((4.0 - timeTakenSec) * 15) : 0;
+      const basePoints = target.length * 10;
+      const lineScore = Math.round((basePoints + speedBonus) * gameState.combo);
 
-    if (isExactMatch) {
-      // ── Correct submission ──
-      correctCharsTotal += currentTarget.length;
-      combo++;
-      if (combo > bestCombo) bestCombo = combo;
-      linesCompleted++;
+      gameState.score += lineScore;
+      statScore.textContent = gameState.score;
 
-      // Speed bonus
-      const elapsed = Date.now() - lineStartTimestamp;
-      const speedRatio = Math.max(0, 1 - elapsed / SPEED_BONUS_WINDOW);
-      const speedBonus = Math.round(SPEED_BONUS_MAX * speedRatio);
+      if (gameState.consecutiveSuccess % 3 === 0 && gameState.combo < 3.0) {
+        gameState.combo = parseFloat((gameState.combo + 0.25).toFixed(2));
+        statCombo.textContent = `${gameState.combo}x`;
+        sfx.playCombo();
+      } else {
+        sfx.playSuccess();
+      }
 
-      // Combo multiplier
-      const multiplier = Math.min(1 + combo * COMBO_MULTIPLIER_STEP, COMBO_MULTIPLIER_CAP);
-
-      const linePoints = Math.round((currentTarget.length * POINTS_PER_CHAR + speedBonus) * multiplier);
-      score += linePoints;
-
-      let fb = `+${linePoints} pts`;
-      if (speedBonus > 0) fb += ` (speed +${speedBonus})`;
-      if (combo > 1) fb += ` · ${combo}x combo`;
-      showFeedback(fb, 'correct');
-
+      pushStdout(`$ ${target}`, 'cmd');
+      pushStdout(gameState.activeCommand.out, 'out');
+      nextCommand();
     } else {
-      // ── Incorrect submission ──
-      const partialPoints = correctInAttempt * POINTS_PER_CHAR_WRONG;
-      score += partialPoints;
-      combo = 0;
-
-      showFeedback(partialPoints > 0 ? `Incorrect — +${partialPoints} pts partial` : 'Incorrect — no points', 'incorrect');
+      sfx.playError();
+      gameState.combo = 1.0;
+      gameState.consecutiveSuccess = 0;
+      statCombo.textContent = '1.0x';
+      pushStdout(`$ ${cmdInput.value}`, 'cmd');
+      pushStdout(`bash: command failed or syntax error`, 'err');
     }
-
-    // Advance to next target
-    els.gameInput.value = '';
-    nextTarget();
-    updateStats();
-    els.gameInput.focus();
-  }
-
-  // ──────────────────────────────────────────────
-  // Live stats
-  // ──────────────────────────────────────────────
-
-  function updateStats() {
-    els.statScore.textContent = score.toLocaleString();
-    els.statLines.textContent = linesCompleted;
-    els.statCombo.textContent = combo + 'x';
-    updateTimerDisplay();
-
-    // WPM: (correct chars / 5) / elapsed minutes
-    const elapsedMs = Date.now() - startTimestamp;
-    const elapsedMin = elapsedMs / 60000;
-    const wpm = elapsedMin > 0 ? Math.round((correctCharsTotal / 5) / elapsedMin) : 0;
-    els.statWpm.textContent = Number.isFinite(wpm) ? wpm : 0;
-
-    // Accuracy
-    const acc = totalCharsAttempted > 0
-      ? Math.round((correctCharsAttempted / totalCharsAttempted) * 100)
-      : 100;
-    els.statAccuracy.textContent = (Number.isFinite(acc) ? acc : 100) + '%';
-  }
-
-  // ──────────────────────────────────────────────
-  // Feedback
-  // ──────────────────────────────────────────────
-
-  function showFeedback(msg, cls) {
-    els.feedback.textContent = msg;
-    els.feedback.className = 'feedback ' + cls;
-  }
-
-  function clearFeedback() {
-    els.feedback.textContent = '';
-    els.feedback.className = 'feedback';
-  }
-
-  // ──────────────────────────────────────────────
-  // End run
-  // ──────────────────────────────────────────────
-
-  function endRun() {
-    clearInterval(timerInterval);
-    timerInterval = null;
-    state = 'results'; // block further input immediately
-
-    els.gameInput.disabled = true;
-    els.submitBtn.disabled = true;
-
-    // Final WPM calc using full 60s
-    const elapsedMin = GAME_DURATION / 60;
-    const finalWpm = elapsedMin > 0 ? Math.round((correctCharsTotal / 5) / elapsedMin) : 0;
-    const safeWpm = Number.isFinite(finalWpm) ? finalWpm : 0;
-
-    // Final accuracy
-    const finalAcc = totalCharsAttempted > 0
-      ? Math.round((correctCharsAttempted / totalCharsAttempted) * 100)
-      : 100;
-    const safeAcc = Number.isFinite(finalAcc) ? finalAcc : 100;
-
-    // Check personal bests
-    let isNewBestScore = false;
-    let isNewBestWpm = false;
-
-    if (score > bestScore) {
-      bestScore = score;
-      saveNumber(LS_KEY_SCORE, bestScore);
-      isNewBestScore = true;
+  } else if (e.key === 'Escape') {
+    if (gameState.active) {
+      endGame();
     }
-    if (safeWpm > bestWpm) {
-      bestWpm = safeWpm;
-      saveNumber(LS_KEY_WPM, bestWpm);
-      isNewBestWpm = true;
-    }
-
-    // Populate results
-    els.resScore.textContent = score.toLocaleString();
-    els.resWpm.textContent = safeWpm;
-    els.resAccuracy.textContent = safeAcc + '%';
-    els.resLines.textContent = linesCompleted;
-    els.resCombo.textContent = bestCombo + 'x';
-
-    els.resScoreBest.hidden = !isNewBestScore;
-    els.resWpmBest.hidden = !isNewBestWpm;
-
-    // Re-enable submit btn for next round
-    els.submitBtn.disabled = false;
-
-    showScreen('results');
   }
+});
 
-  // ──────────────────────────────────────────────
-  // Results actions
-  // ──────────────────────────────────────────────
+// Modal Event Listeners
+rebootBtn.addEventListener('click', startGame);
+menuBtn.addEventListener('click', returnToMenu);
 
-  els.playAgainBtn.addEventListener('click', () => {
-    startRun();
-  });
-
-  els.menuBtn.addEventListener('click', () => {
-    initWelcome();
-  });
-
-  // ──────────────────────────────────────────────
-  // Abort / Escape handling
-  // ──────────────────────────────────────────────
-
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
+window.addEventListener('keydown', (e) => {
+  if (gameState.isEnded) {
+    if (e.code === 'Space' || e.key === ' ') {
       e.preventDefault();
-
-      // If modal is open, close it (cancel)
-      if (els.confirmModal.classList.contains('active')) {
-        closeModal();
-        els.gameInput.focus();
-        return;
-      }
-
-      if (state === 'playing') {
-        openModal();
-      } else if (state === 'results') {
-        initWelcome();
-      }
+      startGame();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      returnToMenu();
     }
-  });
-
-  function openModal() {
-    els.confirmModal.classList.add('active');
-    els.modalCancel.focus();
   }
+});
 
-  function closeModal() {
-    els.confirmModal.classList.remove('active');
-  }
+// --- 7. CONTROLS ---
+themeSelect.addEventListener('change', (e) => {
+  document.documentElement.setAttribute('data-theme', e.target.value);
+});
 
-  els.modalCancel.addEventListener('click', () => {
-    closeModal();
-    els.gameInput.focus();
+crtToggle.addEventListener('click', () => {
+  document.body.classList.toggle('crt-active');
+  const active = document.body.classList.contains('crt-active');
+  crtToggle.textContent = `CRT: ${active ? 'ON' : 'OFF'}`;
+});
+
+audioToggle.addEventListener('click', () => {
+  const enabled = sfx.toggle();
+  audioToggle.textContent = `AUDIO: ${enabled ? 'ON' : 'OFF'}`;
+});
+
+// Pack Selector (Guard: Disallowed when running)
+document.querySelectorAll('.pack-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (gameState.active) return;
+    document.querySelectorAll('.pack-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    gameState.currentPack = btn.dataset.pack;
+    gameState.commandQueue = [];
   });
+});
 
-  els.modalConfirm.addEventListener('click', () => {
-    closeModal();
-    abortRun();
+// Difficulty Selector (Guard: Disallowed when running)
+document.querySelectorAll('.diff-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (gameState.active) return;
+    document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    gameState.currentDiff = btn.dataset.diff;
+    gameState.commandQueue = [];
   });
-
-  function abortRun() {
-    clearInterval(timerInterval);
-    timerInterval = null;
-    els.gameInput.disabled = true;
-    initWelcome();
-  }
-
-  // ──────────────────────────────────────────────
-  // Initialise
-  // ──────────────────────────────────────────────
-
-  initWelcome();
-
-})();
+});
