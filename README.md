@@ -4,6 +4,8 @@ A fast-paced cybernetic typing arcade game with authentic CRT aesthetics, synthe
 
 🎮 **Live Playable Demo:** [https://skanda-sh.github.io/terminal-rush/](https://skanda-sh.github.io/terminal-rush/)
 
+![Terminal Rush Preview](assets/preview.png)
+
 ---
 
 ## ✨ Engineering Features
