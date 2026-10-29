@@ -1,73 +1,58 @@
-# TERMINAL RUSH ⚡
+# TERMINAL RUSH ⚡ // v2.3
 
-A fast-paced typing arcade game with a cyberpunk terminal aesthetic. Race against a 60-second clock to type command-line utilities, queries, and snippets as quickly and accurately as possible.
+A fast-paced cybernetic typing arcade game with authentic CRT aesthetics, synthesized 8-bit soundscapes, and simulated shell command execution. Race against a 60-second clock to type terminal commands, utility scripts, and cloud workflows.
 
-🔗 **Play Live:** [https://skanda-sh.github.io/terminal-rush/](https://skanda-sh.github.io/terminal-rush/)
-
----
-
-## ✨ Features
-
-- **60-Second Timed Runs:** Rapid-fire rounds testing speed and typing precision under time pressure.
-- **Three Difficulty Levels:** Easy (basic shell tools), Normal (intermediate dev tools), and Hard (complex shell one-liners and syntax).
-- **120+ Curated Commands:** Real-world commands spanning Linux utilities, Git workflows, Docker, Kubernetes, SQL, and JavaScript.
-- **Real-Time Visual Feedback:** Character-level syntax validation with green/red visual indicators.
-- **Combo & Multiplier Engine:** Chain consecutive correct submissions to build score multipliers up to 3×.
-- **Live Performance Metrics:** Instant computation of WPM (Words Per Minute), accuracy percentages, combo streaks, and line counts.
-- **Local Persistence:** High scores and personal bests saved across sessions using browser `localStorage`.
-- **Zero Dependencies:** Pure vanilla HTML5, CSS3, and modern ES6 JavaScript—no build tools or external frameworks required.
+🎮 **Live Playable Demo:** [https://skanda-sh.github.io/terminal-rush/](https://skanda-sh.github.io/terminal-rush/)
 
 ---
 
-## 🎮 Controls
+## ✨ Engineering Features
 
-| Key | Action |
-| :--- | :--- |
-| **Type normally** | Match the displayed terminal command |
-| **Enter** | Submit the current command line |
-| **Backspace** | Edit input before submitting |
-| **Esc** | Abort current run or return to menu |
-
----
-
-## 🧮 Scoring System
-
-| Component | Calculation & Details |
-| :--- | :--- |
-| **Base Points** | 10 points per correctly typed character |
-| **Speed Bonus** | Up to 50 bonus points for submitting within 4 seconds |
-| **Combo Multiplier** | 1× base + 0.25× per consecutive correct entry (capped at 3×) |
-| **Incorrect Entry** | 2 points per correct character, combo resets, zero speed bonus |
-| **WPM** | `(Correct Characters ÷ 5) ÷ Elapsed Minutes` |
-| **Accuracy** | `(Correct Characters Typed ÷ Total Keystrokes) × 100%` |
+- **Synthesized 8-Bit Web Audio Engine:** Generates real-time audio waveforms (sine, sawtooth, triangle waves) directly via the native browser `AudioContext` API—zero external audio files or network requests required.
+- **Simulated `stdout` Execution Feed:** Intercepts successful command executions to output realistic shell/CLI stdout streams (Git hash logs, Docker pull manifests, Linux process tables).
+- **Fisher-Yates Shuffle Queue:** Replaced uniform random command selection with an in-memory shuffled deck to guarantee zero back-to-back command repetition across sessions.
+- **Dynamic CRT Phosphor Themes:** Instant theme toggles between Matrix Cyber Green, Amber CRT Phosphor, Synthwave Neon, and Ghost White Monochrome.
+- **Config Lockdown & Standby Engine:** Prevents config drift mid-run by locking selectors during gameplay, paired with a dual-action session debrief card (`Space` to retry, `Esc` to return to config menu).
+- **Audio-Visual Countdown Warning:** Critical 10-second timer pulse accompanied by synchronized pitch-shifting audio ticks.
+- **Zero Dependencies:** Pure vanilla ES6+ JavaScript, CSS3 variables/keyframes, and semantic HTML5.
 
 ---
 
-## 📂 Project Structure
+## 📦 Command Packs & Difficulty Tiers
 
-```text
-terminal-rush/
-├── index.html    # Semantic game view & DOM structure
-├── style.css     # Terminal styling, scanlines & neon accents
-├── script.js     # State machine, timing loops, scoring & localStorage
-└── README.md     # Documentation
-```
+| Pack | Focus Areas | Example Commands |
+| :--- | :--- | :--- |
+| **Linux Admin** | Core utilities, permissions, monitoring | `systemctl status nginx`, `grep -rnw './logs'`, `tar -czvf` |
+| **Git Wizard** | Version control workflows, branch mechanics | `git checkout -b feature/auth`, `git rebase -i HEAD~3`, `git cherry-pick` |
+| **Docker & Cloud** | Containerization & Kubernetes orchestration | `docker compose up -d`, `kubectl get pods`, `docker system prune` |
+| **All-in-One** | Balanced combination across all environments | Random balanced mix across all domains |
 
 ---
 
-## 💻 Running Locally
+## 🧮 Performance Metrics & Scoring
 
-Clone the repository and launch directly in any browser:
+* **Base Keystroke Points:** 10 points per valid character typed.
+* **Speed Velocity Bonus:** Up to 50 bonus points when clearing a line under 4 seconds.
+* **Dynamic Multiplier:** Consecutive clean submissions increment the combo multiplier up to 3.0×.
+* **Typing Speed (WPM):** `(Correct Characters ÷ 5) ÷ Elapsed Minutes`
+* **Keystroke Precision:** `(Total Valid Characters ÷ Total Keystrokes) × 100%`
+* **Local Persistence:** High scores and peak WPM persist via the browser's `localStorage` API.
+
+---
+
+## 💻 Local Development
+
+Clone and open immediately in any modern web browser:
 
 ```bash
-# Clone the repository
+# Clone repository
 git clone [https://github.com/skanda-sh/terminal-rush.git](https://github.com/skanda-sh/terminal-rush.git)
 cd terminal-rush
 
-# Open in browser (Windows PowerShell)
+# Run locally (Windows PowerShell)
 start index.html
 
-# Open in browser (Linux)
+# Run locally (Linux / Ubuntu)
 xdg-open index.html
 ```
 
