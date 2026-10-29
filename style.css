@@ -58,6 +58,7 @@ body {
   color: var(--primary-color);
   font-family: var(--font-mono);
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -206,7 +207,6 @@ select#theme-select {
   text-shadow: 0 0 10px var(--primary-glow);
 }
 
-/* 10-Second Critical Alarm Pulse */
 @keyframes timerCriticalPulse {
   0% { transform: scale(1); color: var(--error-color); text-shadow: 0 0 12px var(--error-glow); }
   50% { transform: scale(1.12); color: #ffffff; text-shadow: 0 0 20px var(--error-color); }
@@ -231,6 +231,13 @@ select#theme-select {
   flex-wrap: wrap;
   gap: 0.8rem;
   font-size: 0.75rem;
+}
+
+.config-bar.locked {
+  opacity: 0.35;
+  pointer-events: none;
+  filter: grayscale(0.5);
+  cursor: not-allowed;
 }
 
 .config-label {
@@ -387,9 +394,6 @@ select#theme-select {
   margin-left: 10px;
 }
 
-/* =============================================================================
-   MISSION DEBRIEF / GAME OVER MODAL
-   ============================================================================= */
 .modal-backdrop {
   position: absolute;
   top: 0; left: 0; width: 100%; height: 100%;
@@ -484,9 +488,13 @@ select#theme-select {
   color: var(--primary-color);
 }
 
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
 .modal-btn {
-  background: var(--primary-color);
-  color: var(--bg-color);
   border: none;
   padding: 12px 18px;
   font-family: var(--font-mono);
@@ -498,30 +506,15 @@ select#theme-select {
   transition: all 0.2s ease;
 }
 
-.modal-btn:hover {
-  box-shadow: 0 0 15px var(--primary-glow);
-  transform: translateY(-1px);
-}
-
-/* Mid-game Config Lockdown */
-.config-bar.locked {
-  opacity: 0.35;
-  pointer-events: none;
-  filter: grayscale(0.5);
-  cursor: not-allowed;
-}
-
-/* Modal Action Buttons */
-.modal-actions {
-  display: flex;
-  gap: 12px;
-  justify-content: center;
-}
-
 .modal-btn.primary {
   flex: 1;
   background: var(--primary-color);
   color: var(--bg-color);
+}
+
+.modal-btn.primary:hover {
+  box-shadow: 0 0 15px var(--primary-glow);
+  transform: translateY(-1px);
 }
 
 .modal-btn.secondary {
@@ -535,5 +528,172 @@ select#theme-select {
   border-color: var(--primary-color);
   color: var(--primary-color);
   background: rgba(255, 255, 255, 0.05);
-  box-shadow: none;
+}
+
+/* =============================================================================
+   MOBILE VIEWPORT OPTIMIZATIONS (Smartphones & Tablets < 700px)
+   ============================================================================= */
+@media (max-width: 700px) {
+  body {
+    padding: 0.4rem;
+    align-items: flex-start; /* Avoids clipping on vertical scroll */
+  }
+
+  .terminal-container {
+    border-radius: 6px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8);
+  }
+
+  /* Compact Header */
+  .terminal-header {
+    padding: 0.5rem 0.6rem;
+    gap: 0.4rem;
+  }
+
+  .terminal-title {
+    display: none; /* Hide verbose title to save horizontal space */
+  }
+
+  .top-controls {
+    gap: 0.4rem;
+    margin-left: auto;
+  }
+
+  .control-group label {
+    display: none; /* Save space; dropdown is self-explanatory */
+  }
+
+  select#theme-select, .control-btn {
+    font-size: 0.68rem;
+    padding: 3px 6px;
+  }
+
+  /* 5-Column Single-Row HUD */
+  .hud {
+    grid-template-columns: repeat(5, 1fr);
+    gap: 1px;
+  }
+
+  .hud-box {
+    padding: 0.4rem 0.15rem;
+    gap: 2px;
+  }
+
+  .hud-label {
+    font-size: 0.52rem;
+    letter-spacing: 0;
+  }
+
+  .hud-value {
+    font-size: 0.95rem;
+  }
+
+  /* Swipable Config Pill Bar */
+  .config-bar {
+    padding: 0.4rem 0.6rem;
+    gap: 0.5rem;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .pack-selector, .diff-selector {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .pack-selector::-webkit-scrollbar,
+  .diff-selector::-webkit-scrollbar {
+    display: none;
+  }
+
+  .config-label {
+    font-size: 0.65rem;
+    margin-right: 2px;
+    flex-shrink: 0;
+  }
+
+  .pack-btn, .diff-btn {
+    padding: 3px 7px;
+    font-size: 0.68rem;
+    flex-shrink: 0;
+  }
+
+  /* Console & Input Arena */
+  .console-body {
+    padding: 0.9rem 0.6rem;
+    gap: 0.75rem;
+  }
+
+  .prompt-line {
+    font-size: 0.95rem;
+    gap: 0.4rem;
+  }
+
+  .prompt-symbol {
+    font-size: 0.8rem;
+  }
+
+  .target-display {
+    font-size: 0.95rem;
+    line-height: 1.35;
+  }
+
+  .input-line input {
+    font-size: 0.95rem;
+  }
+
+  /* Slim stdout stream so mobile keyboards don't push offscreen */
+  .stdout-stream {
+    height: 75px;
+    font-size: 0.72rem;
+    padding: 6px;
+  }
+
+  /* Footer */
+  .terminal-footer {
+    padding: 0.4rem 0.6rem;
+    font-size: 0.68rem;
+    flex-direction: column;
+    gap: 0.3rem;
+    align-items: center;
+    text-align: center;
+  }
+
+  .footer-right span {
+    margin: 0 4px;
+  }
+
+  /* Modal scaling */
+  .modal-card {
+    padding: 1.2rem 1rem;
+    width: 95%;
+    gap: 0.9rem;
+  }
+
+  .modal-title {
+    font-size: 1.3rem;
+  }
+
+  .stat-pill {
+    padding: 6px;
+  }
+
+  .pill-value {
+    font-size: 1.1rem;
+  }
+
+  .modal-actions {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .modal-btn {
+    padding: 10px;
+    font-size: 0.82rem;
+  }
 }
